@@ -16,11 +16,13 @@ class MapScreen extends StatefulWidget {
 
 class _MapScreenState extends State<MapScreen> {
 
+
   final MapController _mapController = MapController();
   double _currentZoom = 13.0;
   double latitude = 23.1136;
   double longitude = -82.3666;
   bool _mapReady = false;
+
 
   // Lista de puntos marcados en el mapa
   final List<LatLng> _markers = [];
@@ -33,6 +35,7 @@ class _MapScreenState extends State<MapScreen> {
   void initState() {
     super.initState();
     _initLocationTracking();
+
   }
 
   Future<void> _initLocationTracking() async {
@@ -94,6 +97,9 @@ class _MapScreenState extends State<MapScreen> {
 
   @override
   Widget build(BuildContext context) {
+
+    LatLng centerPoint = LatLng(latitude, longitude);
+
     return Scaffold(
       body: Stack(
         children: [
@@ -112,6 +118,13 @@ class _MapScreenState extends State<MapScreen> {
                   _markers.add(point); // Agrega marcador en el punto tocado
                 });
               },
+              onPositionChanged: (position, hasGesture) {
+                if (hasGesture) {
+                  setState(() {
+                    centerPoint = position.center!;
+                  });
+                }
+              },
           ),
           children: [
             TileLayer( // Bring your own tiles
@@ -119,6 +132,7 @@ class _MapScreenState extends State<MapScreen> {
               userAgentPackageName: 'aac.personal.taxi_calc', // Add your app identifier
               // And many more recommended properties!
             ),
+
             RichAttributionWidget( // Include a stylish prebuilt attribution widget that meets all requirments
               attributions: [
                 TextSourceAttribution(
@@ -160,6 +174,33 @@ class _MapScreenState extends State<MapScreen> {
               ),
           ],
         ),
+          Center(
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                // Círculo exterior
+                Container(
+                  width: 200,
+                  height: 200,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.transparent,
+                    border: Border.all(color: Colors.white, width: 2),
+                  ),
+                ),
+                // Punto central
+                Container(
+                  width: 5,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white12, width: 1),
+                  ),
+                ),
+              ],
+            ),
+          ),
       Positioned(
         bottom: 20,
         left: 0,
