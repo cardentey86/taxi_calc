@@ -18,11 +18,12 @@ class _MapScreenState extends State<MapScreen> {
 
 
   final MapController _mapController = MapController();
-  double _currentZoom = 13.0;
+  double _currentZoom = 15.0;
   double latitude = 23.1136;
   double longitude = -82.3666;
   bool _mapReady = false;
-
+  double _heading = 0.0; // Dirección del dispositivo en grados
+  bool _followUser = true;
 
   // Lista de puntos marcados en el mapa
   final List<LatLng> _markers = [];
@@ -35,42 +36,96 @@ class _MapScreenState extends State<MapScreen> {
   void initState() {
     super.initState();
     _initLocationTracking();
+    _checkPermissions();
+  }
 
+  Future<void> _checkPermissions() async {
+    final permission = await Geolocator.checkPermission();
+    debugPrint('Estado del permiso: $permission');
   }
 
   Future<void> _initLocationTracking() async {
+    // 🔹 Verifica si el servicio de ubicación está activado
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      return Future.error('El servicio de ubicación está deshabilitado.');
+      await Geolocator.openLocationSettings();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Por favor, activa el GPS')),
+      );
+      return;
     }
 
+    // 🔹 Revisa permisos
     LocationPermission permission = await Geolocator.checkPermission();
+
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-        return Future.error('Permiso de ubicación denegado.');
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Permiso de ubicación denegado')),
+        );
+        return;
       }
     }
 
     if (permission == LocationPermission.deniedForever) {
-      return Future.error('Permiso de ubicación permanentemente denegado.');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Permiso denegado permanentemente, actívalo en Ajustes'),
+        ),
+      );
+      await Geolocator.openAppSettings();
+      return;
     }
 
+    // 🔹 Si se concedió el permiso, obtener la ubicación actual
+    final position = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
+
+    if (!mounted) return;
+
+    setState(() {
+      _currentLocation = LatLng(position.latitude, position.longitude);
+      latitude = position.latitude;
+      longitude = position.longitude;
+    });
+
+    // 🔹 Escuchar cambios en tiempo real
+    _positionStream?.cancel(); // Cancela cualquier stream anterior
     _positionStream = Geolocator.getPositionStream(
       locationSettings: const LocationSettings(
         accuracy: LocationAccuracy.high,
         distanceFilter: 5,
       ),
     ).listen((Position position) {
+      if (!mounted) return;
+
       setState(() {
         _currentLocation = LatLng(position.latitude, position.longitude);
+        latitude = position.latitude;
+        longitude = position.longitude;
+        _heading = position.heading; // 🔸 nuevo
       });
+
+      // 🔹 Mantener el marcador en el centro si el seguimiento está activo
+      if (_mapReady && _followUser) {
+        _mapController.move(
+          LatLng(position.latitude, position.longitude),
+          _currentZoom,
+        );
+      }
     });
   }
+
 
   void _zoomIn() {
     if(_mapReady)
       {
+        _currentZoom = _mapController.camera.zoom;
         setState(() {
           _currentZoom += 1;
           _mapController.move(LatLng(latitude, longitude), _currentZoom);
@@ -81,6 +136,7 @@ class _MapScreenState extends State<MapScreen> {
   void _zoomOut() {
     if(_mapReady)
       {
+        _currentZoom = _mapController.camera.zoom;
         setState(() {
           _currentZoom -= 1;
           _mapController.move(LatLng(latitude, longitude), _currentZoom);
@@ -107,7 +163,7 @@ class _MapScreenState extends State<MapScreen> {
             mapController: _mapController,
             options: MapOptions(
               initialCenter: LatLng(latitude, longitude),
-              initialZoom: 13.0,
+              initialZoom: _currentZoom,
               onMapReady: () {
                 setState(() {
                   _mapReady = true;
@@ -122,6 +178,9 @@ class _MapScreenState extends State<MapScreen> {
                 if (hasGesture) {
                   setState(() {
                     centerPoint = position.center!;
+                    latitude = position.center!.latitude;
+                    longitude = position.center!.longitude;
+                    _currentZoom = position.zoom ?? _currentZoom;
                   });
                 }
               },
@@ -162,12 +221,34 @@ class _MapScreenState extends State<MapScreen> {
                 markers: [
                   Marker(
                     point: _currentLocation!,
-                    width: 50,
-                    height: 50,
-                    child: Icon(
-                      Icons.my_location,
-                      color: Colors.blue,
-                      size: 40,
+                    width: 60,
+                    height: 60,
+                    child: Transform.rotate(
+                      angle: _heading * (3.141592653589793 / 180),
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          // 🔹 Capa "borde blanco"
+                          Icon(
+                            Icons.navigation,
+                            color: Colors.white,
+                            size: 38, // un poco más grande para simular el borde
+                            shadows: [
+                              Shadow(
+                                color: Colors.black26,
+                                blurRadius: 4,
+                                offset: Offset(2, 2),
+                              ),
+                            ],
+                          ),
+                          // 🔹 Capa principal (flecha azul)
+                          const Icon(
+                            Icons.navigation,
+                            color: Colors.blueAccent,
+                            size: 30,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
@@ -180,12 +261,23 @@ class _MapScreenState extends State<MapScreen> {
               children: [
                 // Círculo exterior
                 Container(
-                  width: 200,
-                  height: 200,
+                  width: 250,
+                  height: 250,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: Colors.transparent,
-                    border: Border.all(color: Colors.white, width: 2),
+                    border: Border.all(color: Colors.black12, width: 2),
+                  ),
+                ),
+                Transform(
+                  transform: Matrix4.identity()
+                    ..translate(128.0, 0) // Mueve el widget (x, y)
+                    ..rotateZ(1.55), // Rota en radianes (sentido horario)
+                  alignment: Alignment.center, // Centro de rotación
+                  child: Container(
+                    width: 100,
+                    height: 50,
+                    child: const Center(child: Text('250 m')),
                   ),
                 ),
                 // Punto central
@@ -195,7 +287,7 @@ class _MapScreenState extends State<MapScreen> {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white12, width: 1),
+                    border: Border.all(color: Colors.black12, width: 1),
                   ),
                 ),
               ],
@@ -269,12 +361,14 @@ class _MapScreenState extends State<MapScreen> {
           }
             else
           {
-            _mapController.move(_currentLocation!, _currentZoom);
+            setState(() {
+              // 🔹 Al presionar, activa seguimiento
+              _followUser = true;
+              _mapController.move(_currentLocation!, _currentZoom);
+              latitude = _currentLocation!.latitude;
+              longitude = _currentLocation!.longitude;
+            });
           }
-          // if (_markers.isNotEmpty) {
-          //   final last = _markers.last;
-          //   _mapController.move(last, _currentZoom);
-          // }
         },
         backgroundColor: _currentLocation != null
             ? Theme.of(context).colorScheme.primary
