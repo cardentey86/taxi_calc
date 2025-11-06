@@ -54,6 +54,10 @@ class _CalculateControlState extends State<CalculateControl> {
             decoration: BoxDecoration(
               color: viajeActivo ? Colors.red : Colors.green,
               shape: BoxShape.circle,
+              border: Border.all(
+                color: Colors.white,
+                width: 2,
+              ),
               boxShadow: const [
                 BoxShadow(
                   color: Colors.black26,
@@ -63,7 +67,7 @@ class _CalculateControlState extends State<CalculateControl> {
               ],
             ),
             child: Icon(
-              viajeActivo ? Icons.stop : Icons.play_arrow,
+              viajeActivo ? Icons.stop : Icons.local_taxi,
               color: Colors.white,
               size: 32,
             ),
@@ -80,6 +84,10 @@ class _CalculateControlState extends State<CalculateControl> {
             decoration: BoxDecoration(
               color: esperaActiva ? Colors.red : Colors.blue,
               shape: BoxShape.circle,
+              border: Border.all(
+                color: Colors.white,
+                width: 2,
+              ),
               boxShadow: const [
                 BoxShadow(
                   color: Colors.black26,
@@ -89,7 +97,7 @@ class _CalculateControlState extends State<CalculateControl> {
               ],
             ),
             child: Icon(
-              esperaActiva ? Icons.stop : Icons.timer,
+              esperaActiva ? Icons.pause_circle : Icons.timer,
               color: Colors.white,
               size: 32,
             ),
