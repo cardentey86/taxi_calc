@@ -2,10 +2,15 @@ import 'dart:async';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:taxi_calc/modules/map/widgets/calculate_control_widget.dart';
+import 'package:taxi_calc/modules/map/widgets/info_widget.dart';
+import 'package:taxi_calc/modules/map/widgets/orientation_control_widget.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -37,6 +42,13 @@ class _MapScreenState extends State<MapScreen> {
     super.initState();
     _initLocationTracking();
     _checkPermissions();
+    WakelockPlus.enable();
+  }
+
+  @override
+  void dispose() {
+    WakelockPlus.disable();
+    super.dispose();
   }
 
   Future<void> _checkPermissions() async {
@@ -120,7 +132,6 @@ class _MapScreenState extends State<MapScreen> {
       }
     });
   }
-
 
   void _zoomIn() {
     if(_mapReady)
@@ -293,59 +304,114 @@ class _MapScreenState extends State<MapScreen> {
               ],
             ),
           ),
-      Positioned(
-        bottom: 20,
-        left: 0,
-        right: 0,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Botón Zoom -
-            GestureDetector(
-              onTap: _zoomOut,
-              child: Container(
-                width: 50,
-                height: 50,
-                decoration: BoxDecoration(
-                  color: Colors.white70,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 2),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black26,
-                      blurRadius: 4,
-                      offset: Offset(2, 2),
+          // 🔼 Botones arriba a la izquierda
+          Positioned(
+            top: 20,
+            left: -10,
+            child: OrientationControls(onModeChanged: (mode) {
+              // Acción al cambiar el modo de orientación
+            }),
+          ),
+          // 🔼 Botones arriba a la derecha
+          Positioned(
+            top: 20,
+            right: 10,
+            child: InfoWidget(),
+          ),
+          Positioned(
+            bottom: 90,
+            left: 20,
+            child: CalculateControl(),
+          ),
+          Positioned(
+            bottom: 20,
+            left: 0,
+            right: 0,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // 🔧 Botón Settings alineado a la izquierda
+                GestureDetector(
+                  onTap: () {
+                    // Acción al presionar el botón de configuración
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.only(left: 20),
+                    width: 50,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: Colors.white70,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black26,
+                          blurRadius: 4,
+                          offset: Offset(2, 2),
+                        ),
+                      ],
+                    ),
+                    child: Icon(Icons.settings, color: Colors.black87),
+                  ),
+                ),
+
+                // 📍 Contenedor centrado con los dos botones de zoom
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Botón Zoom -
+                    GestureDetector(
+                      onTap: _zoomOut,
+                      child: Container(
+                        width: 50,
+                        height: 50,
+                        decoration: BoxDecoration(
+                          color: Colors.white70,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black26,
+                              blurRadius: 4,
+                              offset: Offset(2, 2),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(Icons.remove, size: 28, color: Colors.black87),
+                      ),
+                    ),
+                    const SizedBox(width: 20),
+                    // Botón Zoom +
+                    GestureDetector(
+                      onTap: _zoomIn,
+                      child: Container(
+                        width: 50,
+                        height: 50,
+                        decoration: BoxDecoration(
+                          color: Colors.white70,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Colors.black26,
+                              blurRadius: 4,
+                              offset: Offset(2, 2),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(Icons.add, size: 28, color: Colors.black87),
+                      ),
                     ),
                   ],
                 ),
-                child: const Icon(Icons.remove, size: 28, color: Colors.black87),
-              ),
+
+                // Espaciador invisible a la derecha (para balancear el Row)
+                const SizedBox(width: 50),
+              ],
             ),
-            const SizedBox(width: 20),
-            // Botón Zoom +
-            GestureDetector(
-              onTap: _zoomIn,
-              child: Container(
-                width: 50,
-                height: 50,
-                decoration: BoxDecoration(
-                  color: Colors.white70,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 2),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black26,
-                      blurRadius: 4,
-                      offset: Offset(2, 2),
-                    ),
-                  ],
-                ),
-                child: const Icon(Icons.add, size: 28, color: Colors.black87),
-              ),
-            ),
-          ],
-        ),
-      ),
+          ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
