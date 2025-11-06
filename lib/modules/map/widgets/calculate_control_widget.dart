@@ -17,6 +17,7 @@ class _CalculateControlState extends State<CalculateControl> {
       viajeActivo = true;
       esperaActiva = false;
     });
+    _showSnackBar("Viaje iniciado");
   }
 
   void _detenerViaje() {
@@ -24,6 +25,7 @@ class _CalculateControlState extends State<CalculateControl> {
       viajeActivo = false;
       esperaActiva = false;
     });
+    _showSnackBar("Viaje finalizado");
   }
 
   void _iniciarEspera() {
@@ -31,12 +33,28 @@ class _CalculateControlState extends State<CalculateControl> {
     setState(() {
       esperaActiva = true;
     });
+    _showSnackBar("Espera iniciada");
   }
 
   void _detenerEspera() {
     setState(() {
       esperaActiva = false;
     });
+    _showSnackBar("Espera finalizada");
+  }
+
+  void _showSnackBar(String message) {
+    final scaffold = ScaffoldMessenger.of(context);
+    scaffold.showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 80),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        backgroundColor: Colors.black87,
+      ),
+    );
   }
 
   @override
