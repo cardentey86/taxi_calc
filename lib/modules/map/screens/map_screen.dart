@@ -6,7 +6,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:taxi_calc/modules/map/widgets/calculate_control_widget.dart';
+import 'package:taxi_calc/modules/map/widgets/configuration_dialog_widget.dart';
 import 'package:taxi_calc/modules/map/widgets/info_widget.dart';
 import 'package:taxi_calc/modules/map/widgets/orientation_control_widget.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -30,6 +32,16 @@ class _MapScreenState extends State<MapScreen> {
   double _heading = 0.0; // Dirección del dispositivo en grados
   bool _followUser = true;
 
+  double kms = 0.0;
+  double hours = 0.0;
+  double tarifa = 0.0;
+
+  Timer? _timer;
+  int costPerHour = 0; // 💰 valor por hora
+  int costPerKm = 0; // 💰 valor por km
+  bool _viajeActivo = false;
+  bool _esperaActiva = false;
+
   // Lista de puntos marcados en el mapa
   final List<LatLng> _markers = [];
 
@@ -42,6 +54,7 @@ class _MapScreenState extends State<MapScreen> {
     super.initState();
     _initLocationTracking();
     _checkPermissions();
+    _loadTarifaFromPrefs();
     WakelockPlus.enable();
   }
 
@@ -49,6 +62,14 @@ class _MapScreenState extends State<MapScreen> {
   void dispose() {
     WakelockPlus.disable();
     super.dispose();
+  }
+
+  Future<void> _loadTarifaFromPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      costPerHour = prefs.getInt('price_hora') ?? 100; // valor por defecto si no existe
+      costPerKm = prefs.getInt('price_km') ?? 100;
+    });
   }
 
   Future<void> _checkPermissions() async {
@@ -316,12 +337,22 @@ class _MapScreenState extends State<MapScreen> {
           Positioned(
             top: 20,
             right: 10,
-            child: InfoWidget(),
+            child: InfoWidget(
+              kms: kms,
+              hours: hours,
+              min: convertHoursToMin(hours),
+              tarifa: tarifa,
+            ),
           ),
           Positioned(
             bottom: 90,
             left: 20,
-            child: CalculateControl(),
+            child: CalculateControl(
+              onStartTrip: _startTrip,
+              onStopTrip: _stopTrip,
+              onStartWait: _startWait,
+              onStopWait: _stopWait,
+            ),
           ),
           Positioned(
             bottom: 20,
@@ -334,7 +365,10 @@ class _MapScreenState extends State<MapScreen> {
                 // 🔧 Botón Settings alineado a la izquierda
                 GestureDetector(
                   onTap: () {
-                    // Acción al presionar el botón de configuración
+                    showDialog(
+                      context: context,
+                      builder: (context) => const ConfigurationDialog(),
+                    );
                   },
                   child: Container(
                     margin: const EdgeInsets.only(left: 20),
@@ -449,5 +483,54 @@ class _MapScreenState extends State<MapScreen> {
         ),
       ), // This trailing comma makes auto-formatting nicer for build methods.
     );
+  }
+
+  void _startTrip() {
+    setState(() {
+      _viajeActivo = true;
+      hours = 0.0;
+      tarifa = 0.0;
+    });
+  }
+
+  void _stopTrip() {
+    setState(() {
+      _viajeActivo = false;
+      _esperaActiva = false;
+    });
+  }
+
+  void _startWait() {
+    if (!_viajeActivo) return;
+    setState(() {
+      _esperaActiva = true;
+    });
+    _startTimer();
+  }
+
+  void _stopWait() {
+    setState(() {
+      _esperaActiva = false;
+    });
+    _stopTimer();
+  }
+
+  void _startTimer() async {
+    await _loadTarifaFromPrefs();
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      setState(() {
+        hours += 1 / 3600; // cada segundo = 1/3600 horas
+        tarifa = hours * costPerHour;
+      });
+    });
+  }
+
+  int convertHoursToMin(double horas) {
+    return (horas * 60).toInt();
+  }
+
+  void _stopTimer() {
+    _timer?.cancel();
   }
 }

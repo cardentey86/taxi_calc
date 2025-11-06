@@ -2,7 +2,18 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class CalculateControl extends StatefulWidget {
-  const CalculateControl({super.key});
+  final VoidCallback? onStartTrip;
+  final VoidCallback? onStopTrip;
+  final VoidCallback? onStartWait;
+  final VoidCallback? onStopWait;
+
+  const CalculateControl({
+    super.key,
+    this.onStartTrip,
+    this.onStopTrip,
+    this.onStartWait,
+    this.onStopWait,
+  });
 
   @override
   State<CalculateControl> createState() => _CalculateControlState();
@@ -18,6 +29,7 @@ class _CalculateControlState extends State<CalculateControl> {
       esperaActiva = false;
     });
     _showSnackBar("Viaje iniciado");
+    widget.onStartTrip?.call();
   }
 
   void _detenerViaje() {
@@ -26,6 +38,7 @@ class _CalculateControlState extends State<CalculateControl> {
       esperaActiva = false;
     });
     _showSnackBar("Viaje finalizado");
+    widget.onStopTrip?.call();
   }
 
   void _iniciarEspera() {
@@ -34,6 +47,7 @@ class _CalculateControlState extends State<CalculateControl> {
       esperaActiva = true;
     });
     _showSnackBar("Espera iniciada");
+    widget.onStartWait?.call();
   }
 
   void _detenerEspera() {
@@ -41,6 +55,7 @@ class _CalculateControlState extends State<CalculateControl> {
       esperaActiva = false;
     });
     _showSnackBar("Espera finalizada");
+    widget.onStopWait?.call();
   }
 
   void _showSnackBar(String message) {

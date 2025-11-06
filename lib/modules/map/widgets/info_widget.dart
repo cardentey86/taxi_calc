@@ -1,18 +1,24 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class InfoWidget extends StatefulWidget {
-  const InfoWidget({super.key});
+  final double kms;
+  final double hours;
+  final int min;
+  final double tarifa;
+
+  const InfoWidget({
+    super.key,
+    required this.kms,
+    required this.hours,
+    required this.min,
+    required this.tarifa,
+  });
 
   @override
   State<InfoWidget> createState() => _InfoWidgetState();
 }
 
 class _InfoWidgetState extends State<InfoWidget> {
-  double km = 0.0;
-  double hours = 0.0;
-  double tarifa = 0.0;
-
   @override
   Widget build(BuildContext context) {
     return Positioned(
@@ -28,26 +34,20 @@ class _InfoWidgetState extends State<InfoWidget> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Text("Kms", style: TextStyle(fontWeight: FontWeight.bold),),
-            Text(km.toStringAsFixed(1)),
-            SizedBox(height: 6),
-            Text("Hrs", style: TextStyle(fontWeight: FontWeight.bold)),
-            Text(hours.toStringAsFixed(1)),
-            SizedBox(height: 6),
-            Text("Tarifa", style: TextStyle(fontWeight: FontWeight.bold)),
-            Text(tarifa.toStringAsFixed(2)),
+            const Text("Kms", style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(widget.kms.toStringAsFixed(2)),
+            const SizedBox(height: 6),
+            const Text("Hrs", style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(widget.hours.toStringAsFixed(2)),
+            const SizedBox(height: 6),
+            const Text("Min", style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(widget.min.toString()),
+            const SizedBox(height: 6),
+            const Text("Tarifa", style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(widget.tarifa.toStringAsFixed(2)),
           ],
         ),
       ),
     );
-  }
-
-  // 🔄 Ejemplo de cómo actualizar los valores
-  void updateStats({double? newKm, double? newHours, double? newTarifa}) {
-    setState(() {
-      if (newKm != null) km = newKm;
-      if (newHours != null) hours = newHours;
-      if (newTarifa != null) tarifa = newTarifa;
-    });
   }
 }
