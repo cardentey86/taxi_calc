@@ -354,7 +354,7 @@ class _MapScreenState extends State<MapScreen> {
           // 🔼 Botones arriba a la izquierda
           Positioned(
             top: 20,
-            left: -10,
+            left: 20,
             child: OrientationControls(onModeChanged: (mode) {
               // Acción al cambiar el modo de orientación
             }),

@@ -21,32 +21,28 @@ class InfoWidget extends StatefulWidget {
 class _InfoWidgetState extends State<InfoWidget> {
   @override
   Widget build(BuildContext context) {
-    return Positioned(
-      top: 20,
-      right: 10,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: Colors.white70,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white, width: 2),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            const Text("Kms", style: TextStyle(fontWeight: FontWeight.bold)),
-            Text(widget.kms.toStringAsFixed(3)),
-            const SizedBox(height: 6),
-            const Text("Hrs", style: TextStyle(fontWeight: FontWeight.bold)),
-            Text(widget.hours.toStringAsFixed(2)),
-            const SizedBox(height: 6),
-            const Text("Min", style: TextStyle(fontWeight: FontWeight.bold)),
-            Text(widget.min.toInt().toString()),
-            const SizedBox(height: 6),
-            const Text("Tarifa", style: TextStyle(fontWeight: FontWeight.bold)),
-            Text(widget.tarifa.toInt().toString()),
-          ],
-        ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white70,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white, width: 2),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const Text("Kms", style: TextStyle(fontWeight: FontWeight.bold)),
+          Text(widget.kms.toStringAsFixed(3)),
+          const SizedBox(height: 6),
+          const Text("Hrs", style: TextStyle(fontWeight: FontWeight.bold)),
+          Text(widget.hours.toStringAsFixed(2)),
+          const SizedBox(height: 6),
+          const Text("Min", style: TextStyle(fontWeight: FontWeight.bold)),
+          Text(widget.min.toInt().toString()),
+          const SizedBox(height: 6),
+          const Text("Tarifa", style: TextStyle(fontWeight: FontWeight.bold)),
+          Text(widget.tarifa.toInt().toString()),
+        ],
       ),
     );
   }

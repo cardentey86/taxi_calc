@@ -32,13 +32,20 @@ class _CalculateControlState extends State<CalculateControl> {
     widget.onStartTrip?.call();
   }
 
-  void _detenerViaje() {
-    setState(() {
-      viajeActivo = false;
-      esperaActiva = false;
-    });
-    _showSnackBar("Viaje finalizado");
-    widget.onStopTrip?.call();
+  Future<void> _detenerViaje() async {
+    final confirm = await _showConfirmDialog(
+      title: "Finalizar viaje",
+      message: "¿Seguro que deseas detener el viaje?",
+    );
+
+    if(confirm == true){
+      setState(() {
+        viajeActivo = false;
+        esperaActiva = false;
+      });
+      _showSnackBar("Viaje finalizado");
+      widget.onStopTrip?.call();
+    }
   }
 
   void _iniciarEspera() {
@@ -68,6 +75,34 @@ class _CalculateControlState extends State<CalculateControl> {
         margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 80),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         backgroundColor: Colors.black87,
+      ),
+    );
+  }
+
+  Future<bool?> _showConfirmDialog({
+    required String title,
+    required String message,
+  }) {
+    return showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+        content: Text(message),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text("Cancelar", style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+            ),
+            child: const Text("Detener", style: TextStyle(color: Colors.white),),
+          ),
+        ],
       ),
     );
   }

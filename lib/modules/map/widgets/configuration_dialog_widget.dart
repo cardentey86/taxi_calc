@@ -105,7 +105,10 @@ class _ConfigurationDialogState extends State<ConfigurationDialog> {
         ),
         ElevatedButton(
           onPressed: _guardarValores,
-          child: const Text("Guardar"),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.green,
+          ),
+          child: Text("Guardar", style: TextStyle(color: Colors.white)),
         ),
       ],
     );

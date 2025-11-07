@@ -77,32 +77,28 @@ class _OrientationControlsState extends State<OrientationControls> {
 
   @override
   Widget build(BuildContext context) {
-    return Positioned(
-      top: 20,
-      left: 10,
-      child: GestureDetector(
-        onTap: _cycleMode,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 250),
-          width: 55,
-          height: 55,
-          decoration: BoxDecoration(
-            color: Colors.white70,
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.white, width: 2),
-            boxShadow: const [
-              BoxShadow(
-                color: Colors.black26,
-                blurRadius: 6,
-                offset: Offset(2, 2),
-              ),
-            ],
-          ),
-          child: Icon(
-            _getIcon(),
-            color: _getColor(),
-            size: 30,
-          ),
+    return GestureDetector(
+      onTap: _cycleMode,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        width: 50,
+        height: 50,
+        decoration: BoxDecoration(
+          color: Colors.white70,
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white, width: 2),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black26,
+              blurRadius: 6,
+              offset: Offset(2, 2),
+            ),
+          ],
+        ),
+        child: Icon(
+          _getIcon(),
+          color: _getColor(),
+          size: 30,
         ),
       ),
     );
