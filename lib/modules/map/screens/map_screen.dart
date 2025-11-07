@@ -145,7 +145,7 @@ class _MapScreenState extends State<MapScreen> {
 
       LatLng newPosition = LatLng(position.latitude, position.longitude);
 
-      if (_viajeActivo && _followUser && _currentLocation != null) {
+      if (_viajeActivo && _followUser && !_esperaActiva && _currentLocation != null) {
         final double distanceMeters = _distance.as(
           LengthUnit.Meter,
           _currentLocation!,
@@ -156,6 +156,7 @@ class _MapScreenState extends State<MapScreen> {
         if (distanceMeters > 2 && distanceMeters < 100) {
           setState(() {
             kms += distanceMeters / 1000; // convertir a kilómetros
+            tarifa += (distanceMeters / 1000) * costPerKm;
           });
         }
       }
