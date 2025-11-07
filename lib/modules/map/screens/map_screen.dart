@@ -24,7 +24,6 @@ class MapScreen extends StatefulWidget {
 
 class _MapScreenState extends State<MapScreen> {
 
-
   final MapController _mapController = MapController();
   double _currentZoom = 15.0;
   double latitude = 23.1136;
@@ -53,6 +52,8 @@ class _MapScreenState extends State<MapScreen> {
   LatLng? _lastLocation;
   LatLng? _targetLocation;
   Timer? _smoothTimer;
+
+  final Distance _distance = Distance();
 
   @override
   void initState() {
@@ -142,26 +143,39 @@ class _MapScreenState extends State<MapScreen> {
     ).listen((Position position) {
       if (!mounted) return;
 
+      LatLng newPosition = LatLng(position.latitude, position.longitude);
+
+      if (_viajeActivo && _followUser && _currentLocation != null) {
+        final double distanceMeters = _distance.as(
+          LengthUnit.Meter,
+          _currentLocation!,
+          newPosition,
+        );
+
+        // Evitar valores erráticos (saltos grandes del GPS)
+        if (distanceMeters > 2 && distanceMeters < 100) {
+          setState(() {
+            kms += distanceMeters / 1000; // convertir a kilómetros
+          });
+        }
+      }
+
       setState(() {
-        _currentLocation = LatLng(position.latitude, position.longitude);
-        latitude = position.latitude;
-        longitude = position.longitude;
+        _currentLocation = newPosition;
+        latitude = newPosition.latitude;
+        longitude = newPosition.longitude;
         _heading = position.heading; // 🔸 nuevo
       });
 
       // 🔹 Mantener el marcador en el centro si el seguimiento está activo
       if (_mapReady && _followUser) {
-        _mapController.move(
-          LatLng(position.latitude, position.longitude),
-          _currentZoom,
-        );
+        _mapController.move(newPosition, _currentZoom);
       }
 
-      _lastLocation = _currentLocation ?? LatLng(position.latitude, position.longitude);
-      _targetLocation = LatLng(position.latitude, position.longitude);
+      _lastLocation = _currentLocation ?? newPosition;
+      _targetLocation = newPosition;
       _heading = position.heading;
       _animateMarker();
-
     });
   }
 
@@ -453,6 +467,7 @@ class _MapScreenState extends State<MapScreen> {
   void _startTrip() {
     setState(() {
       _viajeActivo = true;
+      kms = 0.0;
       hours = 0.0;
       tarifa = 0.0;
     });
