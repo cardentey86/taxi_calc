@@ -35,7 +35,7 @@ class _InfoWidgetState extends State<InfoWidget> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             const Text("Kms", style: TextStyle(fontWeight: FontWeight.bold)),
-            Text(widget.kms.toStringAsFixed(2)),
+            Text(widget.kms.toString()),
             const SizedBox(height: 6),
             const Text("Hrs", style: TextStyle(fontWeight: FontWeight.bold)),
             Text(widget.hours.toStringAsFixed(2)),
@@ -44,7 +44,7 @@ class _InfoWidgetState extends State<InfoWidget> {
             Text(widget.min.toString()),
             const SizedBox(height: 6),
             const Text("Tarifa", style: TextStyle(fontWeight: FontWeight.bold)),
-            Text(widget.tarifa.toStringAsFixed(2)),
+            Text(widget.tarifa.toInt().toString()),
           ],
         ),
       ),

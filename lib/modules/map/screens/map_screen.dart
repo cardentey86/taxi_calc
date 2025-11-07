@@ -11,6 +11,7 @@ import 'package:taxi_calc/modules/map/widgets/calculate_control_widget.dart';
 import 'package:taxi_calc/modules/map/widgets/configuration_dialog_widget.dart';
 import 'package:taxi_calc/modules/map/widgets/info_widget.dart';
 import 'package:taxi_calc/modules/map/widgets/orientation_control_widget.dart';
+import 'package:taxi_calc/modules/map/widgets/zoom_widget.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
@@ -48,6 +49,10 @@ class _MapScreenState extends State<MapScreen> {
   // Ubicación en tiempo real
   LatLng? _currentLocation;
   StreamSubscription<Position>? _positionStream;
+
+  LatLng? _lastLocation;
+  LatLng? _targetLocation;
+  Timer? _smoothTimer;
 
   @override
   void initState() {
@@ -151,6 +156,12 @@ class _MapScreenState extends State<MapScreen> {
           _currentZoom,
         );
       }
+
+      _lastLocation = _currentLocation ?? LatLng(position.latitude, position.longitude);
+      _targetLocation = LatLng(position.latitude, position.longitude);
+      _heading = position.heading;
+      _animateMarker();
+
     });
   }
 
@@ -391,56 +402,10 @@ class _MapScreenState extends State<MapScreen> {
                 ),
 
                 // 📍 Contenedor centrado con los dos botones de zoom
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Botón Zoom -
-                    GestureDetector(
-                      onTap: _zoomOut,
-                      child: Container(
-                        width: 50,
-                        height: 50,
-                        decoration: BoxDecoration(
-                          color: Colors.white70,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 2),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black26,
-                              blurRadius: 4,
-                              offset: Offset(2, 2),
-                            ),
-                          ],
-                        ),
-                        child: const Icon(Icons.remove, size: 28, color: Colors.black87),
-                      ),
-                    ),
-                    const SizedBox(width: 20),
-                    // Botón Zoom +
-                    GestureDetector(
-                      onTap: _zoomIn,
-                      child: Container(
-                        width: 50,
-                        height: 50,
-                        decoration: BoxDecoration(
-                          color: Colors.white70,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 2),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Colors.black26,
-                              blurRadius: 4,
-                              offset: Offset(2, 2),
-                            ),
-                          ],
-                        ),
-                        child: const Icon(Icons.add, size: 28, color: Colors.black87),
-                      ),
-                    ),
-                  ],
+                ZoomWidget(
+                  zoomIn: _zoomIn,
+                  zoomOut: _zoomOut,
                 ),
-
                 // Espaciador invisible a la derecha (para balancear el Row)
                 const SizedBox(width: 50),
               ],
@@ -533,4 +498,38 @@ class _MapScreenState extends State<MapScreen> {
   void _stopTimer() {
     _timer?.cancel();
   }
+
+  void _animateMarker() {
+    _smoothTimer?.cancel();
+    if (_lastLocation == null || _targetLocation == null) return;
+
+    const duration = Duration(milliseconds: 800); // duración de la animación
+    const tick = Duration(milliseconds: 16); // ~60 fps
+    int elapsed = 0;
+
+    _smoothTimer = Timer.periodic(tick, (timer) {
+      elapsed += tick.inMilliseconds;
+      double t = (elapsed / duration.inMilliseconds).clamp(0.0, 1.0);
+
+      final lat = _lastLocation!.latitude + (_targetLocation!.latitude - _lastLocation!.latitude) * t;
+      final lng = _lastLocation!.longitude + (_targetLocation!.longitude - _lastLocation!.longitude) * t;
+
+      setState(() {
+        _currentLocation = LatLng(lat, lng);
+        latitude = lat;
+        longitude = lng;
+      });
+
+      // Si el seguimiento está activo, mueve el mapa también
+      if (_followUser && _mapReady) {
+        _mapController.move(_currentLocation!, _currentZoom);
+      }
+
+      if (t >= 1.0) {
+        timer.cancel();
+        _lastLocation = _targetLocation;
+      }
+    });
+  }
+
 }
