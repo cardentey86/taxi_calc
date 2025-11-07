@@ -48,11 +48,13 @@ class _ConfigurationDialogState extends State<ConfigurationDialog> {
       await prefs.setInt('price_km', priceKm);
       await prefs.setInt('price_hora', priceHour);
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Configuración guardada')),
-      );
-
-      Navigator.of(context).pop();
+      if(mounted)
+        {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Configuración guardada')),
+          );
+          Navigator.of(context).pop();
+        }
     }
   }
 

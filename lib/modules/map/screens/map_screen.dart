@@ -119,7 +119,9 @@ class _MapScreenState extends State<MapScreen> {
 
     // 🔹 Si se concedió el permiso, obtener la ubicación actual
     final position = await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high,
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+      ),
     );
 
     if (!mounted) return;
@@ -323,7 +325,7 @@ class _MapScreenState extends State<MapScreen> {
                 ),
                 Transform(
                   transform: Matrix4.identity()
-                    ..translate(128.0, 0) // Mueve el widget (x, y)
+                    ..translateByDouble(128.0, 0, 0, 0) // Mueve el widget (x, y)
                     ..rotateZ(1.55), // Rota en radianes (sentido horario)
                   alignment: Alignment.center, // Centro de rotación
                   child: SizedBox(
