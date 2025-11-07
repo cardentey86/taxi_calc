@@ -23,7 +23,6 @@ class _OrientationControlsState extends State<OrientationControls> {
       _currentMode = MapOrientationMode.values[
       (_currentMode.index + 1) % MapOrientationMode.values.length];
     });
-
     widget.onModeChanged(_currentMode);
     _showSnackBar(_getTooltip());
   }

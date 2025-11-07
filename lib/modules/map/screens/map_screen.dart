@@ -52,6 +52,10 @@ class _MapScreenState extends State<MapScreen> {
 
   final Distance _distance = Distance();
 
+  MapOrientationMode _mapOrientationMode = MapOrientationMode.northUp;
+
+  double _rotation = 0.0;
+
   @override
   void initState() {
     super.initState();
@@ -172,9 +176,13 @@ class _MapScreenState extends State<MapScreen> {
         _mapController.move(newPosition, _currentZoom);
       }
 
+      if (_mapOrientationMode == MapOrientationMode.followHeading) {
+        _rotation = -_heading;
+        _mapController.rotate(_rotation);
+      }
+
       _lastLocation = _currentLocation ?? newPosition;
       _targetLocation = newPosition;
-      _heading = position.heading;
       _animateMarker();
     });
   }
@@ -208,6 +216,19 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
+  void _onOrientationModeChanged(MapOrientationMode mode) {
+    setState(() {
+      _mapOrientationMode = mode;
+    });
+
+    // Si cambiamos a norte arriba, rotamos el mapa a 0°
+    if (mode == MapOrientationMode.northUp) {
+      _rotation = 0.0;
+      _mapController.rotate(_rotation);
+    }
+  }
+
+
   @override
   Widget build(BuildContext context) {
 
@@ -231,6 +252,9 @@ class _MapScreenState extends State<MapScreen> {
               },
               onPositionChanged: (position, hasGesture) {
                 if (hasGesture) {
+                  if (hasGesture && _mapOrientationMode == MapOrientationMode.free) {
+                    _rotation = position.rotation;
+                  }
                   setState(() {
                     latitude = position.center.latitude;
                     longitude = position.center.longitude;
@@ -351,9 +375,9 @@ class _MapScreenState extends State<MapScreen> {
           Positioned(
             top: 20,
             left: 20,
-            child: OrientationControls(onModeChanged: (mode) {
-              // Acción al cambiar el modo de orientación
-            }),
+            child: OrientationControls(
+              onModeChanged: _onOrientationModeChanged,
+            ),
           ),
           // 🔼 Botones arriba a la derecha
           Positioned(
