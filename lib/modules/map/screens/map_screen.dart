@@ -326,7 +326,7 @@ class _MapScreenState extends State<MapScreen> {
                     ..translate(128.0, 0) // Mueve el widget (x, y)
                     ..rotateZ(1.55), // Rota en radianes (sentido horario)
                   alignment: Alignment.center, // Centro de rotación
-                  child: Container(
+                  child: SizedBox(
                     width: 100,
                     height: 50,
                     child: const Center(child: Text('250 m')),
@@ -448,13 +448,13 @@ class _MapScreenState extends State<MapScreen> {
             ? Theme.of(context).colorScheme.primary
             : Colors.grey,
         tooltip: 'Increment',
-        child: Icon(Icons.location_on, color: Colors.white),
         shape: CircleBorder(
           side: BorderSide(
             color: Theme.of(context).colorScheme.onPrimary,
             width: 2.0,
           ),
         ),
+        child: Icon(Icons.location_on, color: Colors.white),
       ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
