@@ -212,8 +212,6 @@ class _MapScreenState extends State<MapScreen> {
   @override
   Widget build(BuildContext context) {
 
-    LatLng centerPoint = LatLng(latitude, longitude);
-
     return Scaffold(
       body: Stack(
         children: [
@@ -235,10 +233,9 @@ class _MapScreenState extends State<MapScreen> {
               onPositionChanged: (position, hasGesture) {
                 if (hasGesture) {
                   setState(() {
-                    centerPoint = position.center!;
-                    latitude = position.center!.latitude;
-                    longitude = position.center!.longitude;
-                    _currentZoom = position.zoom ?? _currentZoom;
+                    latitude = position.center.latitude;
+                    longitude = position.center.longitude;
+                    _currentZoom = position.zoom;
                   });
                 }
               },
