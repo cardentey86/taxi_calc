@@ -22,7 +22,7 @@ class MapScreen extends StatefulWidget {
 class _MapScreenState extends State<MapScreen> {
 
   final MapController _mapController = MapController();
-  double _currentZoom = 15.0;
+  double _currentZoom = 20.0;
   double latitude = 23.1136;
   double longitude = -82.3666;
   bool _mapReady = false;
@@ -62,12 +62,14 @@ class _MapScreenState extends State<MapScreen> {
     _initLocationTracking();
     _checkPermissions();
     _loadTarifaFromPrefs();
+    _loadLastPositionPrefs();
     WakelockPlus.enable();
   }
 
   @override
   void dispose() {
     WakelockPlus.disable();
+    _saveLastPosition();
     super.dispose();
   }
 
@@ -79,9 +81,23 @@ class _MapScreenState extends State<MapScreen> {
     });
   }
 
+  Future<void> _loadLastPositionPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      latitude = prefs.getDouble('latitude') ?? 23.1136; // valor por defecto si no existe
+      longitude = prefs.getDouble('longitude') ?? -82.3666;
+    });
+  }
+
   Future<void> _checkPermissions() async {
     final permission = await Geolocator.checkPermission();
     debugPrint('Estado del permiso: $permission');
+  }
+
+  Future<void> _saveLastPosition()async{
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setDouble('latitude', latitude);
+    prefs.setDouble('longitude', longitude);
   }
 
   Future<void> _initLocationTracking() async {
@@ -209,6 +225,10 @@ class _MapScreenState extends State<MapScreen> {
       }
   }
 
+  void _reloadMap() {
+    _initLocationTracking();
+  }
+
   Future<void> _launchUrl(String url) async {
     final uri = Uri.parse(url);
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
@@ -227,7 +247,6 @@ class _MapScreenState extends State<MapScreen> {
       _mapController.rotate(_rotation);
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -436,10 +455,11 @@ class _MapScreenState extends State<MapScreen> {
                   ),
                 ),
 
-                // 📍 Contenedor centrado con los dos botones de zoom
+                // 📍 Contenedor centrado con los dos botones de zoom y recargar mapa
                 ZoomWidget(
                   zoomIn: _zoomIn,
                   zoomOut: _zoomOut,
+                  reloadMap: _reloadMap,
                 ),
                 // Espaciador invisible a la derecha (para balancear el Row)
                 const SizedBox(width: 50),
