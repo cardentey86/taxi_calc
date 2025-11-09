@@ -22,9 +22,9 @@ class MapScreen extends StatefulWidget {
 class _MapScreenState extends State<MapScreen> {
 
   final MapController _mapController = MapController();
-  double _currentZoom = 20.0;
-  double latitude = 23.1136;
-  double longitude = -82.3666;
+  double _currentZoom = 16.0;
+  double latitude = 0.0;
+  double longitude = 0.0;
   bool _mapReady = false;
   double _heading = 0.0; // Dirección del dispositivo en grados
   bool _followUser = true;
@@ -56,6 +56,10 @@ class _MapScreenState extends State<MapScreen> {
 
   double _rotation = 0.0;
 
+  Timer? _mapAnimTimer;
+  final int _defaultMapAnimMs = 700; // duración por defecto en ms
+  final double _maxAnimateDistanceMeters = 80.0; // si la distancia es mayor, hacemos move instantáneo
+
   @override
   void initState() {
     super.initState();
@@ -69,6 +73,8 @@ class _MapScreenState extends State<MapScreen> {
   @override
   void dispose() {
     WakelockPlus.disable();
+    _positionStream?.cancel();
+    _mapAnimTimer?.cancel();
     _saveLastPosition();
     super.dispose();
   }
@@ -83,10 +89,18 @@ class _MapScreenState extends State<MapScreen> {
 
   Future<void> _loadLastPositionPrefs() async {
     final prefs = await SharedPreferences.getInstance();
+    final lat = prefs.getDouble('latitude') ?? 23.1136;
+    final lng = prefs.getDouble('longitude') ?? -82.3666;
+
     setState(() {
-      latitude = prefs.getDouble('latitude') ?? 23.1136; // valor por defecto si no existe
-      longitude = prefs.getDouble('longitude') ?? -82.3666;
+      latitude = lat;
+      longitude = lng;
     });
+
+    // Si el mapa ya está listo, muévelo a la última posición guardada
+    if (_mapReady) {
+      _mapController.move(LatLng(lat, lng), _currentZoom);
+    }
   }
 
   Future<void> _checkPermissions() async {
@@ -96,8 +110,9 @@ class _MapScreenState extends State<MapScreen> {
 
   Future<void> _saveLastPosition()async{
     final prefs = await SharedPreferences.getInstance();
-    prefs.setDouble('latitude', latitude);
-    prefs.setDouble('longitude', longitude);
+    final center = _mapController.camera.center;
+    prefs.setDouble('latitude', center.latitude);
+    prefs.setDouble('longitude', center.longitude);
   }
 
   Future<void> _initLocationTracking() async {
@@ -189,7 +204,8 @@ class _MapScreenState extends State<MapScreen> {
 
       // 🔹 Mantener el marcador en el centro si el seguimiento está activo
       if (_mapReady && _followUser) {
-        _mapController.move(newPosition, _currentZoom);
+        //_mapController.move(newPosition, _currentZoom);
+        _animateMapTo(newPosition, durationMs: 700);
       }
 
       if (_mapOrientationMode == MapOrientationMode.followHeading) {
@@ -278,7 +294,9 @@ class _MapScreenState extends State<MapScreen> {
                     latitude = position.center.latitude;
                     longitude = position.center.longitude;
                     _currentZoom = position.zoom;
+                    _followUser = false;
                   });
+                  _saveLastPosition();
                 }
               },
           ),
@@ -511,6 +529,7 @@ class _MapScreenState extends State<MapScreen> {
       kms = 0.0;
       hours = 0.0;
       tarifa = 0.0;
+      _followUser = true;
     });
   }
 
@@ -542,7 +561,7 @@ class _MapScreenState extends State<MapScreen> {
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       setState(() {
         hours += 1 / 3600; // cada segundo = 1/3600 horas
-        tarifa = hours * costPerHour;
+        tarifa += hours * costPerHour;
       });
     });
   }
@@ -577,13 +596,57 @@ class _MapScreenState extends State<MapScreen> {
       });
 
       // Si el seguimiento está activo, mueve el mapa también
-      if (_followUser && _mapReady) {
-        _mapController.move(_currentLocation!, _currentZoom);
-      }
+      // if (_followUser && _mapReady) {
+      //   //_mapController.move(_currentLocation!, _currentZoom);
+      //   _animateMapTo(_currentLocation!, durationMs: 700);
+      // }
 
       if (t >= 1.0) {
         timer.cancel();
         _lastLocation = _targetLocation;
+      }
+    });
+  }
+
+  void _animateMapTo(LatLng dest, {int durationMs = 700}) {
+    // cancelar animación en curso
+    _mapAnimTimer?.cancel();
+    if (!_mapReady) {
+      // si el mapa no está listo, hacer move directo
+      _mapController.move(dest, _currentZoom);
+      return;
+    }
+
+    final LatLng start = _mapController.camera.center;
+    final double startZoom = _mapController.camera.zoom;
+    final double endZoom = _currentZoom;
+
+    // comprobar distancia para evitar animar saltos enormes (GPS errático)
+    final double distMeters = _distance.as(LengthUnit.Meter, start, dest);
+    if (distMeters > _maxAnimateDistanceMeters) {
+      _mapController.move(dest, endZoom);
+      return;
+    }
+
+    final int totalMs = durationMs;
+    const int tickMs = 16; // ~60 FPS
+    int elapsed = 0;
+
+    _mapAnimTimer = Timer.periodic(Duration(milliseconds: tickMs), (timer) {
+      elapsed += tickMs;
+      double t = (elapsed / totalMs).clamp(0.0, 1.0);
+      // easing (suaviza la animación)
+      double eased = Curves.easeInOut.transform(t);
+
+      final double lat = start.latitude + (dest.latitude - start.latitude) * eased;
+      final double lng = start.longitude + (dest.longitude - start.longitude) * eased;
+      final double zoom = startZoom + (endZoom - startZoom) * eased;
+
+      _mapController.move(LatLng(lat, lng), zoom);
+
+      if (t >= 1.0) {
+        timer.cancel();
+        _mapAnimTimer = null;
       }
     });
   }

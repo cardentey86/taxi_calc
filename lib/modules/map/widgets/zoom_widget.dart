@@ -19,28 +19,6 @@ class _ZoomWidgetState extends State<ZoomWidget> {
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        // Boton para recargar mapa por fallo de conexion
-        GestureDetector(
-          onTap: widget.zoomOut?.call,
-          child: Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              color: Colors.white70,
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 2),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black26,
-                  blurRadius: 4,
-                  offset: Offset(2, 2),
-                ),
-              ],
-            ),
-            child: const Icon(Icons.restart_alt, size: 28, color: Colors.black87),
-          ),
-        ),
-        const SizedBox(width: 20),
         // Botón Zoom -
         GestureDetector(
           onTap: widget.zoomOut?.call,
